@@ -20,29 +20,28 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 active_reminders = {}
 
 
-class CancelView(discord.ui.View):
-    def __init__(self, user_id):
-        super().__init__(timeout=None)
-        self.user_id = user_id
+@discord.ui.button(label="Cancel Reminder", style=discord.ButtonStyle.red)
+async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
 
-    @discord.ui.button(label="Cancel Reminder", style=discord.ButtonStyle.red)
-    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-
-        if interaction.user.id != self.user_id:
-            await interaction.response.send_message(
-                "This button isn't for you.", ephemeral=True
-            )
-            return
-
-        task = active_reminders.get(self.user_id)
-
-        if task:
-            task.cancel()
-            del active_reminders[self.user_id]
-
+    if interaction.user.id != self.user_id:
         await interaction.response.send_message(
-            "❌ Reminder cancelled.", ephemeral=True
+            "This button isn't for you.", ephemeral=True
         )
+        return
+
+    task = active_reminders.get(self.user_id)
+
+    if task:
+        task.cancel()
+        del active_reminders[self.user_id]
+
+    button.disabled = True
+
+    await interaction.response.edit_message(
+        content="❌ Reminder cancelled.",
+        view=self
+    )
+    
 class ReminderView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -101,6 +100,7 @@ async def on_ready():
         )
 
         print("Panel message ID:", message.id)
+
 
 
 bot.run(TOKEN)
