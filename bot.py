@@ -5,6 +5,9 @@ import time
 import sqlite3
 from dotenv import load_dotenv
 
+# -----------------------------
+# LOAD ENV
+# -----------------------------
 load_dotenv()
 
 TOKEN = os.getenv("TOKEN")
@@ -227,7 +230,7 @@ async def on_ready():
 
     channel = bot.get_channel(CHANNEL_ID)
 
-    # 🔥 CLEAN OLD PANELS (Railway leftovers)
+    # 🔥 CLEAN OLD PANELS
     async for msg in channel.history(limit=20):
         if msg.author == bot.user and "Guild Tree Reminder" in msg.content:
             try:
@@ -235,13 +238,12 @@ async def on_ready():
             except:
                 pass
 
-    # 🔥 CREATE NEW PANEL
+    # CREATE PANEL
     panel_message = await channel.send(
         "🌳 Guild Tree Reminder",
         view=ReminderPanel()
     )
 
-    # SAVE PANEL ID
     cursor.execute("DELETE FROM panel")
     cursor.execute(
         "INSERT INTO panel (message_id) VALUES (?)",
@@ -253,4 +255,30 @@ async def on_ready():
     await update_panel()
 
 
+# -----------------------------
+# KEEP ALIVE SERVER (IMPORTANT)
+# -----------------------------
+from threading import Thread
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is alive"
+
+def run_web():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+
+def keep_alive():
+    t = Thread(target=run_web)
+    t.start()
+
+keep_alive()
+
+
+# -----------------------------
+# RUN BOT
+# -----------------------------
 bot.run(TOKEN)
